@@ -2,12 +2,13 @@ import os
 import requests
 import time
 import threading
+import gunicorn
 from flask import Flask
 
 app = Flask(__name__)
 
 # Configuration
-QUICKNODE_URL = os.getenv('QUICKNODE_URL', 'YOUR_QUICKNODE_URL_HERE')
+QUICKNODE_URL = os.getenv('QUICKNODE_URL')
 TELEGRAM_TOKEN = "8322021979:AAEVQjYXO4Yutqil1c6tDeQYLa97U-mnYFM"
 GROUP_ID = "1002718015353"
 TOKEN_CONTRACT = "0x2119de8f257d27662991198389E15Bf8d1F4aB24"
@@ -17,6 +18,7 @@ BSC_LINK = "https://bscscan.com/token/0x2119de8f257d27662991198389E15Bf8d1F4aB24
 
 # Global variables
 last_checked_block = None
+app_started = False
 
 def get_current_block():
     payload = {
@@ -71,7 +73,10 @@ def send_telegram_alert(message):
         "caption": caption,
         "parse_mode": "HTML"
     }
-    requests.post(url, json=payload)
+    try:
+        requests.post(url, json=payload, timeout=10)
+    except Exception as e:
+        print(f"Telegram error: {e}")
 
 def monitor_transactions():
     while True:
@@ -91,11 +96,9 @@ def monitor_transactions():
                             "Secure your position in the next-generation DeFi ecosystem."
                         )
                         send_telegram_alert(message)
-            
             time.sleep(180)  # Check every 3 minutes
-        
         except Exception as e:
-            print(f"Error: {e}")
+            print(f"Monitoring error: {e}")
             time.sleep(60)
 
 def send_reminder():
@@ -109,14 +112,18 @@ def send_reminder():
         send_telegram_alert(message)
         time.sleep(1800)  # 30 minutes
 
+@app.before_first_request
+def start_background_tasks():
+    global app_started
+    if not app_started:
+        threading.Thread(target=monitor_transactions, daemon=True).start()
+        threading.Thread(target=send_reminder, daemon=True).start()
+        app_started = True
+        print("Background tasks started")
+
 @app.route('/')
 def home():
     return "Agama Price Alert Bot is Running"
 
 if __name__ == '__main__':
-    # Start monitoring threads
-    threading.Thread(target=monitor_transactions, daemon=True).start()
-    threading.Thread(target=send_reminder, daemon=True).start()
-    
-    # Start Flask server
     app.run(host='0.0.0.0', port=5000)
