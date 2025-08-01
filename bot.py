@@ -1,9 +1,9 @@
-
+# bot.py
 import os
 import asyncio
 import logging
 from web3 import Web3, WebSocketProvider
-from web3.middleware.geth_poa import geth_poa_middleware
+from web3.middleware import geth_poa_middleware
 from telegram import Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes, ApplicationBuilder
@@ -47,7 +47,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     Sends a welcome message and introduction when the /start command is issued.
     """
     await update.message.reply_text(
-        f"👋 Welcome to the Agama Coin Bot! 👋\n\n"
+        f"👋 Welcome to the Agama Coin Bot! �\n\n"
         f"I'm here to provide real-time presale buy alerts and periodic reminders.\n"
         f"Use /buynow to get the presale link."
     )
@@ -58,7 +58,7 @@ async def buy_now_command(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     Sends the presale link when the /buynow command is issued.
     """
     message = (
-        f"? *Agama Coin Presale is Live!* 🚀\n\n"
+        f"🚀 *Agama Coin Presale is Live!* 🚀\n\n"
         f"Secure your position and become an early holder.\n\n"
         f"➡️ [Buy Now!]({BSC_SCAN_TOKEN_URL})"
     )
