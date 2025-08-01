@@ -2,7 +2,6 @@ import os
 import requests
 import time
 import threading
-import gunicorn
 from flask import Flask
 
 app = Flask(__name__)
@@ -18,7 +17,7 @@ BSC_LINK = "https://bscscan.com/token/0x2119de8f257d27662991198389E15Bf8d1F4aB24
 
 # Global variables
 last_checked_block = None
-app_started = False
+background_threads_started = False
 
 def get_current_block():
     payload = {
@@ -112,18 +111,19 @@ def send_reminder():
         send_telegram_alert(message)
         time.sleep(1800)  # 30 minutes
 
-@app.before_first_request
 def start_background_tasks():
-    global app_started
-    if not app_started:
+    global background_threads_started
+    if not background_threads_started:
         threading.Thread(target=monitor_transactions, daemon=True).start()
         threading.Thread(target=send_reminder, daemon=True).start()
-        app_started = True
+        background_threads_started = True
         print("Background tasks started")
 
 @app.route('/')
 def home():
+    start_background_tasks()  # Start threads on first request
     return "Agama Price Alert Bot is Running"
 
 if __name__ == '__main__':
+    start_background_tasks()  # For local testing
     app.run(host='0.0.0.0', port=5000)
